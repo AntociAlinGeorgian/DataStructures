@@ -1,0 +1,9 @@
+Gigel	1
+Sorel	10
+Andrei	5
+Angelica	8
+Florin	8
+Aurel	1
+Laurentiu	9
+Florentina	6
+Florica	5
