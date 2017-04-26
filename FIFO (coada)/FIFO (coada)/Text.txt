@@ -1,0 +1,3 @@
+Costel	1	44
+Gigel	0	22
+Andrei	1	11
