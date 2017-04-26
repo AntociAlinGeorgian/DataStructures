@@ -1,0 +1,3 @@
+Angelica	11.2	1
+Flori	12.2	2
+Teo		11.5	3
