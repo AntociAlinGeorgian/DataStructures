@@ -148,5 +148,5 @@ void main() {
 	//parcurgereInOrdine(arbore);
 	//parcurgerePostOrdine(arbore);
 	parcurgerePreOrdine(arbore);
-
+	stergereNod(arbore, "teo");
 }
