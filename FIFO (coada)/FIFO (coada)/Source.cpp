@@ -21,22 +21,14 @@ struct Nod {
 	Nod* next;
 };
 
+
 struct Coada {
 	Nod* prim;
 	Nod* ultim;
 };
 
-
-void initCoada(Coada*& coada) {
-	coada->prim = coada->ultim = NULL;
-}
-
-
-Nod* creareNod(Angajat* a) {
-	Nod* n = new Nod;
-	n->info = a;
-	n->next = NULL;
-	return n;
+void initCoada(Coada*& c) {
+	c->prim = c->ultim = NULL;
 }
 
 bool emptyCoada(Coada* c) {
@@ -48,92 +40,96 @@ bool emptyCoada(Coada* c) {
 	}
 }
 
+Nod* creareNod(Angajat* a) {
+	Nod* n = new Nod;
+	n->info = a;
+	n->next = NULL;
+	return n;
+}
 
-void inserareCoada(Coada*& coada, Nod* nou) {
-	if (emptyCoada(coada) != NULL) {
-		coada->prim = coada->ultim = nou;
+void inserareCoada(Coada*& c, Nod* n) {
+	if (c->prim==NULL) {
+		c->prim = c->ultim = n;
 	}
 	else {
-		coada->ultim->next = nou;
-		coada->ultim = nou;
+		c->ultim->next = n;
+		c->ultim = n;
 	}
 }
 
-Nod* extragereNod(Coada** coada) {
-	Nod* extrage = (*coada)->prim;
-	(*coada)->prim = extrage->next;
+Nod* extragereNod(Coada** c) {
+	Nod* extrage = (*c)->prim;
+	(*c)->prim = extrage->next;
 	return extrage;
 }
 
-void citireFisier(Coada*& coada) {
+void parcurgereLista(Coada* c) {
+	if (c) {
+		Nod* tmp = c->prim;
+		while (tmp!=NULL) {
+			printf("%s \n", tmp->info->nume);
+			tmp = tmp->next;
+		}
+	}
+}
+
+void citireFisier(Coada*& c) {
 	FILE* f = fopen("Text.txt", "r");
 	if (f) {
 		while (!feof(f)) {
 			Angajat* a = new Angajat;
-
-			char aux[10];
+			
+			char aux[20];
 			fscanf(f, "%s", &aux);
 			a->nume = (char*)malloc(strlen(aux) + 1);
 			strcpy(a->nume, aux);
 
-			int tipAng;
-			fscanf(f, "%d", &tipAng);
+			int prof;
+			fscanf(f, "%d", &prof);
 
-			switch (tipAng) {
+			switch (prof) {
 			case 0:
-				a->profesie = PROF;
-				fscanf(f, "%d", &a->oreLucrate.nrOreNorma);
+				a->profesie = MED;
+				fscanf(f, "%ld", &a->oreLucrate.nrOreGarda);
 				break;
 			case 1:
-				a->profesie = MED;
-				fscanf(f, "%lf", &a->oreLucrate.nrOreGarda);
+				a->profesie = PROF;
+				fscanf(f, "%d", &a->oreLucrate.nrOreNorma);
 				break;
 			}
 
 			Nod* n = creareNod(a);
-			inserareCoada(coada, n);
+			inserareCoada(c, n);
+			
 		}
 		fclose(f);
 	}
-
 }
 
-void parcurgereCoada(Coada* c) {
-	while (!emptyCoada(c)) {
-		Nod* tmp = extragereNod(&c);
-		printf("%s \n", tmp->info->nume);
-	}
-}
-
-void stergereNume(Coada*& coada, char* nume) {
-	if (!emptyCoada(coada)) {
-		if (strcmp(coada->prim->info->nume, nume) == 0) {
-			Nod* sterge = coada->prim;
-			coada->prim = sterge->next;
+void stergereNod(Coada*& c, char* nume) {
+	if (c) {
+		//verificam primul nod
+		if (strcmp(c->prim->info->nume, nume) == 0) {
+			Nod* deExtras = c->prim;
+			c->prim = deExtras->next;
+			free(deExtras);
+		}
+		Nod* lista = c->prim;
+		while (lista->next != NULL && (strcmp(lista->next->info->nume, nume) != 0)) {
+			lista = lista->next;
+		}
+		if (lista->next != NULL) {
+			Nod* sterge = lista->next;
+			lista->next = sterge->next;
 			free(sterge);
 		}
-	}
-
-	Nod* lista = coada->prim;
-	while (lista->next != NULL && (strcmp(lista->next->info->nume, nume) != 0)) {
-		lista = lista->next;
-	}
-
-	if (lista->next) {
-		Nod* sterge = lista->next;
-		lista->next = sterge->next;
-		free(sterge);
 	}
 }
 
 void main() {
 	Coada* c = new Coada;
 	initCoada(c);
-
 	citireFisier(c);
-
-	stergereNume(c, "Costel");
-
-	parcurgereCoada(c);
+	stergereNod(c, "Andrei");
+	parcurgereLista(c);
 }
-
