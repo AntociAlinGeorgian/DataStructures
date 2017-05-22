@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<memory.h>
 
 
 //Admin -> Lista simplu inlantuita
@@ -93,15 +94,135 @@ void addPaper(nodeLSI*& printersList) {
 
 /* USER -> ABC */
 struct Fisier {
-
+	char* numeFisier;
+	char* continutFisier;
+	int nrPagesNeeded;
 };
+
+struct ABC {
+	Fisier* infoFisier;
+	ABC* right;
+	ABC* left;
+};
+
+ABC* createNodeABC(Fisier* info) {
+	ABC* nod = new ABC;
+	nod->infoFisier = info;
+	nod->left = NULL;
+	nod->right = NULL;
+	return nod;
+}
+
+void insertFileABC(ABC*& arbore, ABC* nod) {
+	if (arbore == NULL) {
+		arbore = nod;
+	}
+	else {
+		if (strcmp(arbore->infoFisier->numeFisier,nod->infoFisier->numeFisier)>0) {
+			insertFileABC(arbore->left, nod);
+		}
+		else if (strcmp(arbore->infoFisier->numeFisier, nod->infoFisier->numeFisier)<0) {
+			insertFileABC(arbore->right, nod);
+		}
+		else {
+			insertFileABC(arbore->right, nod);
+		}
+	}
+}
+
+int papersNeeded(FILE* f) {
+	int ch;
+	int lines = 0;
+	int papersNr;
+	int maxLinesPerPaper = 100;
+	while (!feof(f)) {
+		ch = fgetc(f);
+		if (ch == '\n') {
+			lines++;
+		}
+	}
+	papersNr = lines / maxLinesPerPaper;
+	if (papersNr == 0) {
+		papersNr++;
+	}
+
+	return papersNr;
+}
+
+void readFiles(ABC*& arbore) {
+	char fpath[100];
+	char fname[10];
+	Fisier* file = new Fisier;
+
+	system("cls");
+	printf("== PRINTER USER ==\n");
+	printf("\nPath to file > ");
+	scanf("%s", &fpath);
+
+	printf("Name for file > ");
+	scanf("%s", &fname);
+	file->numeFisier = (char*)malloc(strlen(fname) + 1);
+	strcpy(file->numeFisier, fname);
+	
+	FILE* f = fopen(fpath, "r");
+	char* source=NULL;
+	if (f) {
+		if (fseek(f, 0L, SEEK_END) == 0) {
+			/* Get the size of the file. */
+			long bufsize = ftell(f);
+			if (bufsize == -1) { /* Error */ }
+
+			/* Allocate our buffer to that size. */
+			source = (char*)malloc(sizeof(char) * (bufsize + 1));
+
+			/* Go back to the start of the file. */
+			if (fseek(f, 0L, SEEK_SET) != 0) { /* Error */ }
+
+			/* Read the entire file into memory. */
+			size_t newLen = fread(source, sizeof(char), bufsize, f);
+			if (ferror(f) != 0) {
+				fputs("Error reading file", stderr);
+			}
+			else {
+				source[newLen++] = '\0'; /* Just to be safe. */
+			}
+
+			file->continutFisier = (char*)malloc(sizeof(source) + 1);
+			strcpy(file->continutFisier, source);
+
+			file->nrPagesNeeded=papersNeeded(f);
+
+			ABC* nodFile = createNodeABC(file);
+			insertFileABC(arbore, nodFile);
+			printf("File scanned successful!\n");
+		}
+		fclose(f);
+		free(source);
+	}
+}
+
+void printScannedFiles(ABC* listFiles) {
+	if (listFiles) {
+		printf("- %s\n", listFiles->infoFisier->numeFisier);
+		printScannedFiles(listFiles->left);
+		printScannedFiles(listFiles->right);
+	}
+	
+}
+
+void quitProgram() {
+	//dezalocam memoria
+	exit;
+}
+
 
 
 /* Menu */
-void adminMenu(nodeLSI*&);
-void userMenu(nodeLSI*&);
+void adminMenu(nodeLSI*&, ABC*&);
+void userMenu(nodeLSI*&, ABC*&);
 
-void mainMenu(nodeLSI*& printersList) {
+void mainMenu(nodeLSI*& printersList,ABC*& arboreFisiere) {
+	//system("cls");
 	printf("== SELECTEAZA TIPUL DE UTILIZATOR ==\n\n");
 	printf("1. Administrator\n");
 	printf("2. Utilizator\n");
@@ -137,7 +258,7 @@ void mainMenu(nodeLSI*& printersList) {
 			} while (nrTryes < 3);
 
 			if (ok == 1) {
-				adminMenu(printersList);
+				adminMenu(printersList,arboreFisiere);
 				break;
 			}
 			else {
@@ -147,14 +268,14 @@ void mainMenu(nodeLSI*& printersList) {
 			}
 		case 2:
 			printf("== UTILIZATOR ==\n");
-			userMenu(printersList);
+			userMenu(printersList,arboreFisiere);
 			break;
 		case 0:
-			exit;
+			quitProgram();
 		}
 }
 
-void adminMenu(nodeLSI*& printersList) {
+void adminMenu(nodeLSI*& printersList, ABC*& arboreFisiere) {
 	printf("== ADMINISTRATOR ==\n\n");
 	printf("1. Add Printer\n");
 	printf("2. Show Status Printers\n");
@@ -203,12 +324,12 @@ void adminMenu(nodeLSI*& printersList) {
 		if (insertInLSI(printersList, node)) {
 			system("cls");
 			printf("Printer added!\n\n");
-			adminMenu(printersList);
+			adminMenu(printersList,arboreFisiere);
 			break;
 		}
 		else {
 			printf("Printer was not added!\n\n");
-			adminMenu(printersList);
+			adminMenu(printersList,arboreFisiere);
 			break;
 		}
 	}
@@ -220,11 +341,11 @@ void adminMenu(nodeLSI*& printersList) {
 		printf("\n1. Return to main menu\n");
 		printf("0. Exit\n");
 		if (scanf("%d") == 1) {
-			adminMenu(printersList);
+			adminMenu(printersList,arboreFisiere);
 			break;
 		}
 		else if(scanf("%d")==0){
-			mainMenu(printersList);
+			mainMenu(printersList,arboreFisiere);
 			break;
 		}
 	case 3:
@@ -235,10 +356,10 @@ void adminMenu(nodeLSI*& printersList) {
 		switch (scanf("%d")) {
 		case 1:
 			addPaper(printersList);
-			adminMenu(printersList);
+			adminMenu(printersList,arboreFisiere);
 			break;
 		case 0:
-			exit;
+			quitProgram();
 		}
 		break;
 	case 4:
@@ -247,15 +368,14 @@ void adminMenu(nodeLSI*& printersList) {
 		break;
 	case 5:
 		system("cls");
-		mainMenu(printersList);
+		mainMenu(printersList, arboreFisiere);
 		break;
 	case 0:
-		exit;
+		quitProgram();
 	}
 }
-
-void userMenu(nodeLSI*& printersList) {
-	system("cls");
+ 
+void userMenu(nodeLSI*& printersList,ABC*& arboreFisiere) {
 	printf("== PRINTER USER ==\n\n");
 	printf("1. Scan document\n");
 	printf("2. Print document \n");
@@ -269,19 +389,31 @@ void userMenu(nodeLSI*& printersList) {
 
 	switch (cmd) {
 	case 1:
-		printf("scan doc");
+		system("cls");
+		printf("\n== PRINTER USER ==");
+		readFiles(arboreFisiere);
+		printf("\n\n0. Return to user menu\n\n> ");
+		int auxCmd;
+		scanf("%d", &auxCmd);
+		if (auxCmd == 0) {
+			mainMenu(printersList, arboreFisiere);
+			break;
+		}
 		break;
+		
 	case 2:
-		printf("print doc");
+		system("cls");
+		printf("== PRINTER USER ==");
+		printScannedFiles(arboreFisiere);
 		break;
 	case 3:
 		printf("copy doc");
 		break;
 	case 4:
-		mainMenu(printersList);
+		mainMenu(printersList, arboreFisiere);
 		break;
 	case 0:
-		exit;
+		quitProgram();
 	}
 
 }
@@ -289,5 +421,7 @@ void userMenu(nodeLSI*& printersList) {
 void main() {
 	/*Menu*/
 	nodeLSI* printersList = nullptr;
-	mainMenu(printersList);	
+	ABC* arboreFisiere = nullptr;
+	mainMenu(printersList,arboreFisiere);	
+	
 }
