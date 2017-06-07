@@ -1,198 +1,144 @@
-#include "stdio.h" 
-#include "stdlib.h" 
-#include "string.h"  
+#include<iostream>
+#include<stdio.h>
 
 struct AVL {
+	int info;
 	int gradEchilibru;
-	int infoUtil;
-	AVL* left;
-	AVL* right;
+	AVL* stanga;
+	AVL* dreapta;
 };
 
-AVL* creareNodAVL(int info) {
-	AVL* nod = (AVL*)malloc(sizeof(AVL));
+AVL* creareNod(int info) {
+	AVL* nod = new AVL;
+	nod->info = info;
 	nod->gradEchilibru = 0;
-	nod->infoUtil = info;
-	nod->left = NULL;
-	nod->right = NULL;
+	nod->dreapta = NULL;
+	nod->stanga = NULL;
 	return nod;
 }
 
-int max(int a, int b) {
-	return (a > b) ? a : b;
+int maxim(int a, int b) {
+	return a > b ? a : b;
 }
 
 int inaltimeArbore(AVL* arbore) {
 	if (arbore) {
-		return 1 + max(inaltimeArbore(arbore->left), inaltimeArbore(arbore->right));
+		return 1 + maxim(inaltimeArbore(arbore->dreapta), inaltimeArbore(arbore->stanga));
 	}
-	else
+	else {
 		return 0;
+	}
 }
 
 void calculGradEchilibru(AVL* nod) {
 	if (nod) {
-		nod->gradEchilibru = inaltimeArbore(nod->right) - inaltimeArbore(nod->left);
+		nod->gradEchilibru = inaltimeArbore(nod->dreapta) - inaltimeArbore(nod->stanga);
 	}
 }
 
-
+//rotiri simple
 AVL* rotireSimplaDreapta(AVL* pivot, AVL* fiuStanga) {
-	pivot->left = fiuStanga->right;
+	pivot->stanga = fiuStanga->dreapta;
+	fiuStanga->dreapta = pivot;
 	calculGradEchilibru(pivot);
-	fiuStanga->right = pivot;
 	calculGradEchilibru(fiuStanga);
 	return fiuStanga;
 }
 
 AVL* rotireSimplaStanga(AVL* pivot, AVL* fiuDreapta) {
-	pivot->right = fiuDreapta->left;
+	pivot->dreapta=fiuDreapta->stanga;
+	fiuDreapta->stanga = pivot;
 	calculGradEchilibru(pivot);
-	fiuDreapta->left = pivot;
 	calculGradEchilibru(fiuDreapta);
 	return fiuDreapta;
 }
 
-AVL* rotireDublaStangaDreapta(AVL* pivot, AVL* fiuStanga) {
-	pivot->left = rotireSimplaStanga(fiuStanga, fiuStanga->right);
-	calculGradEchilibru(pivot);  fiuStanga = pivot->left;
+//rotiri duble
+AVL* rotireDublaDreapta(AVL* pivot, AVL* fiuDreapta) {
+	pivot->dreapta = rotireSimplaDreapta(fiuDreapta, fiuDreapta->stanga);
+	calculGradEchilibru(pivot);
+
+	fiuDreapta = pivot->dreapta;
+	fiuDreapta = rotireSimplaStanga(pivot, fiuDreapta);
+	calculGradEchilibru(fiuDreapta);
+
+	return fiuDreapta;
+}
+
+AVL* rotireDublaStanga(AVL* pivot, AVL* fiuStanga) {
+	pivot->stanga = rotireSimplaStanga(fiuStanga, fiuStanga->dreapta);
+	calculGradEchilibru(pivot);
+
+	fiuStanga = pivot->stanga;
 	fiuStanga = rotireSimplaDreapta(pivot, fiuStanga);
 	calculGradEchilibru(fiuStanga);
+	
 	return fiuStanga;
 }
 
-AVL* rotireDublaDreaptaStanga(AVL* pivot, AVL* fiuDreapta) {
-	pivot->right = rotireDublaDreaptaStanga(fiuDreapta, fiuDreapta->left);
-	calculGradEchilibru(pivot);
-	fiuDreapta = pivot->right;
-	fiuDreapta = rotireSimplaStanga(pivot, fiuDreapta);
-	calculGradEchilibru(fiuDreapta);
-	return fiuDreapta;
-}
-
-// FUNCTIE PENTRU ECHILIBRAREA ARBORELUI
+//echilibrare
 void echilibrare(AVL*& arbore) {
-
 	calculGradEchilibru(arbore);
+
 	if (arbore->gradEchilibru == 2) {
-		if (arbore->right->gradEchilibru == -1)
-			//dezechilibru stanga dreapta   
-			arbore = rotireDublaDreaptaStanga(arbore, arbore->right);
-		else
-			//dezechilibru stanga   
-			arbore = rotireSimplaStanga(arbore, arbore->right);
+		if (arbore->dreapta->gradEchilibru == -1) {
+			arbore = rotireDublaDreapta(arbore, arbore->dreapta);
+		}
+		else if (arbore->dreapta->gradEchilibru == 1) {
+			arbore = rotireSimplaStanga(arbore, arbore->dreapta);
+		}
 	}
 	else if (arbore->gradEchilibru == -2) {
-		if (arbore->left->gradEchilibru == 1)
-			arbore = rotireDublaStangaDreapta(arbore, arbore->left);
-		else
-			arbore = rotireSimplaDreapta(arbore, arbore->left);
+		if (arbore->stanga->gradEchilibru == 1) {
+			arbore = rotireDublaStanga(arbore, arbore->stanga);
+		}
+		else if (arbore->stanga->gradEchilibru == -1) {
+			arbore = rotireSimplaDreapta(arbore, arbore->stanga);
+		}
 	}
 }
 
 
-AVL* inserareNod(AVL* arbore, int infoNou) {
-
+void inserareNod(AVL*& arbore, int info) {
 	if (arbore) {
-		if (arbore->infoUtil > infoNou)
-			arbore->left = inserareNod(arbore->left, infoNou);
-		else if (arbore->infoUtil < infoNou)
-			arbore->right = inserareNod(arbore->right, infoNou);
-		else
-			printf("\nNodul exista in lista! Nu il poti insera din nou! \n");
-	}
-	else
-		arbore = creareNodAVL(infoNou);
-	echilibrare(arbore);
-	return arbore;
-}
-// 6. parcurgere 
-void parcurgereInOrdine(AVL* arbore) {
-	if (arbore) {
-		parcurgereInOrdine(arbore->left);
-		printf("Nod %d - echilibrare %d\n", arbore->infoUtil, arbore->gradEchilibru);
-		parcurgereInOrdine(arbore->right);
-	}
-}
-// 7. cautare in AVL
-void cautare(AVL* arbore, int valCautata) {
-	if (arbore) {
-		if (arbore->infoUtil > valCautata)
-			cautare(arbore->left, valCautata);
-		else if (arbore->infoUtil < valCautata)
-			cautare(arbore->right, valCautata);
-		else
-			printf("\n\n\nNodul catat este %d - echilibrare %d\n", arbore->infoUtil, arbore->gradEchilibru);
-	}
-}
-// 8. stergere cu reechilibrare 
-//stergere pentru 2 descendenti 
-void stergereLogica(AVL*& radacina, AVL*& sleft) {
-	//caut cel mai mare nod din subarborele stang  
-	if (sleft->right)
-		stergereLogica(radacina, sleft->right);
-	else {
-		radacina->infoUtil = sleft->infoUtil;
-		AVL* nodTmp = sleft;
-		sleft = sleft->left;
-		free(sleft);
-		free(nodTmp);
-	}
-}
-//stergere 
-void stergereNodArbore(AVL*& arbore, int cheie) {
-	if (arbore) {
-		if (arbore->infoUtil > cheie)
-			stergereNodArbore(arbore->left, cheie);
-		else   if (arbore->infoUtil < cheie)
-			stergereNodArbore(arbore->right, cheie);
+		if (arbore->info > info) {
+			inserareNod(arbore->stanga, info);
+		}
+		else if (arbore->info < info) {
+			inserareNod(arbore->dreapta, info);
+		}
 		else {
-			//1.este nod frunza=>nu are niciun descendent    
-			if (arbore->right == NULL && arbore->left == NULL) {
-				//dezaloc memoria de jos in sus si apoi anunt ca nodul a devenit null   
-				free(arbore);
-				arbore = NULL;
-			}
-			else
-				//2.sterg nod cu un descendent    
-			{
-				if (arbore->left != NULL && arbore->right == NULL) {
-					//salvez noodul ce treb sters intr-un tmp      
-					AVL* sters = arbore;
-					//construiesc leg pe stanga sa nu pierd copilul nodului pe care vreau sa l sterg     
-					arbore = arbore->left;
-					free(sters);
-				}
-				else if (arbore->left == NULL && arbore->right != NULL) {
-					AVL* stergere = arbore;
-					arbore = arbore->right;
-					free(stergere);
-				}
-				else
-					//3.sterge nod cu doi descendenti    
-				{
-					stergereLogica(arbore, arbore->left);
-				}
-
-			}
-		}   echilibrare(arbore);
+			printf("Deja existent!\n");
+		}
 	}
+	else {
+		arbore = creareNod(info);
+	}
+	echilibrare(arbore);
 }
 
+void parcurgere(AVL* arbore) {
+	if (arbore) {
+		parcurgere(arbore->stanga);
+		printf("%d [g.e: %d]\n", arbore->info, arbore->gradEchilibru);
+		parcurgere(arbore->dreapta);
+	}
+}
 
 void citireFisier(AVL*& arbore) {
-	FILE* file = fopen("Text.txt", "r");
-	int valoare;
-	if (file) {
-		while (!feof(file)) {
-			fscanf(file, "%d", &valoare);
-			arbore = inserareNod(arbore, valoare);
+	FILE* f = fopen("Text.txt", "r");
+	if (f) {
+		while (!feof(f)) {
+			int aux;
+			fscanf(f, "%d", &aux);
+			inserareNod(arbore, aux);
 		}
-	}  fclose(file);
+		fclose(f);
+	}
 }
 
 void main() {
 	AVL* arbore = NULL;
 	citireFisier(arbore);
-	parcurgereInOrdine(arbore);
+	parcurgere(arbore);
 }
