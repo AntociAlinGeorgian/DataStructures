@@ -1,0 +1,93 @@
+#include<iostream>
+#include<stdio.h>
+
+struct NodSecundar {
+	int info;
+	NodSecundar* nextSecundar;
+};
+
+struct NodPrincipal {
+	int info;
+	NodPrincipal* nextPrincipal;
+	NodSecundar* listaNoduri;
+};
+
+//prelucrari pe principala
+NodPrincipal* creareNodPrincipal(int info) {
+	NodPrincipal* nod = new NodPrincipal;
+	nod->info = info;
+	nod->nextPrincipal = NULL;
+	nod->listaNoduri = NULL;
+	return nod;
+}
+
+NodPrincipal* inserareNodPrincipal(NodPrincipal*& lista, int nodInfo) {
+	NodPrincipal* nod = creareNodPrincipal(nodInfo);
+	NodPrincipal* tmp = lista;
+	if (lista == NULL) {
+		lista = nod;
+	}
+	else {
+		while (tmp->nextPrincipal != NULL)
+			tmp = tmp->nextPrincipal;
+		tmp->nextPrincipal = nod;
+	}
+	return nod;
+}
+
+//prelucrari pe secundara
+NodSecundar* creareNodSecundar(int info) {
+	NodSecundar* nod = new NodSecundar;
+	nod->info = info;
+	nod->nextSecundar = NULL;
+	return nod;
+}
+
+void inserareListaSecundara(NodSecundar*& lista, int info) {
+	NodSecundar* nod = creareNodSecundar(info);
+	nod->nextSecundar = lista;
+	lista = nod;
+}
+
+void citireFisier(NodPrincipal*& graf) {
+	FILE* f = fopen("Text.txt", "r");
+	int varf, nrVarfuri;
+
+	if (f) {
+		while (!feof(f)) {
+			//citim info ptr nodul principal si il cream
+			fscanf(f, "%d", &varf);
+			NodPrincipal* nodP = inserareNodPrincipal(graf, varf);
+
+			//citim nr de noduri adiacente
+			fscanf(f, "%d", &nrVarfuri);
+
+			//citim nodurile secundare
+			for (int i = 0; i < nrVarfuri; i++) {
+				fscanf(f, "%d", &varf);
+				NodSecundar* lista = nodP->listaNoduri;
+				inserareListaSecundara(lista, varf);
+				nodP->listaNoduri = lista;
+			}
+		}
+	}
+}
+
+void parcurgereSimpla(NodPrincipal* graf) {
+	while (graf) {
+		printf("Nodul %d \n", graf->info);
+		NodSecundar* noduri = graf->listaNoduri;
+		while (noduri != NULL) {
+			printf("%d \t", noduri->info);
+			noduri = noduri->nextSecundar;
+		}
+		printf("\n");
+		graf = graf->nextPrincipal;
+	}
+}
+
+void main() {
+	NodPrincipal* graf = NULL;
+	citireFisier(graf);
+	parcurgereSimpla(graf);
+}
