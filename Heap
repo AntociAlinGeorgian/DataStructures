@@ -25,7 +25,7 @@ void filtrare(Heap*& heap, int index) {
 	int indexStanga = 2 * index + 1;
 	int indexDreapta = 2 * index + 2;
 
-	if (indexStanga<heap->nrElemente && heap->vectorStudenti[index].id>heap->vectorStudenti[indexDreapta].id) {
+	if (indexStanga<heap->nrElemente && heap->vectorStudenti[index].id>heap->vectorStudenti[indexStanga].id) {
 		indexMax = indexStanga;
 	}
 	if (indexDreapta<heap->nrElemente && heap->vectorStudenti[index].id>heap->vectorStudenti[indexDreapta].id) {
