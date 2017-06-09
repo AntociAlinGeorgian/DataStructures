@@ -8,86 +8,84 @@ struct NodSecundar {
 
 struct NodPrincipal {
 	int info;
-	NodPrincipal* nextPrincipal;
+	NodPrincipal* nexPrincipal;
 	NodSecundar* listaNoduri;
 };
 
-//prelucrari pe principala
 NodPrincipal* creareNodPrincipal(int info) {
-	NodPrincipal* nod = new NodPrincipal;
-	nod->info = info;
-	nod->nextPrincipal = NULL;
-	nod->listaNoduri = NULL;
-	return nod;
+	NodPrincipal* nodP = new NodPrincipal;
+	nodP->info = info;
+	nodP->nexPrincipal = NULL;
+	nodP->listaNoduri = NULL;
+	return nodP;
 }
 
-NodPrincipal* inserareNodPrincipal(NodPrincipal*& lista, int nodInfo) {
-	NodPrincipal* nod = creareNodPrincipal(nodInfo);
+NodSecundar* creareNodSecundar(int info) {
+	NodSecundar* nodS = new NodSecundar;
+	nodS->info = info;
+	nodS->nextSecundar = NULL;
+	return nodS;
+}
+
+NodPrincipal* inserareListaPrincipala(NodPrincipal*& lista, int info) {
+	NodPrincipal* nodP = creareNodPrincipal(info);
 	NodPrincipal* tmp = lista;
+
 	if (lista == NULL) {
-		lista = nod;
+		lista = nodP;
 	}
 	else {
-		while (tmp->nextPrincipal != NULL)
-			tmp = tmp->nextPrincipal;
-		tmp->nextPrincipal = nod;
+		while (tmp->nexPrincipal != NULL)
+			tmp = tmp->nexPrincipal;
+		tmp->nexPrincipal = nodP;
 	}
-	return nod;
-}
-
-//prelucrari pe secundara
-NodSecundar* creareNodSecundar(int info) {
-	NodSecundar* nod = new NodSecundar;
-	nod->info = info;
-	nod->nextSecundar = NULL;
-	return nod;
+	return nodP;
 }
 
 void inserareListaSecundara(NodSecundar*& lista, int info) {
-	NodSecundar* nod = creareNodSecundar(info);
-	nod->nextSecundar = lista;
-	lista = nod;
+	NodSecundar* nodS = creareNodSecundar(info);
+	nodS->info = info;
+	nodS->nextSecundar = lista;
+	lista = nodS;
 }
+
 
 void citireFisier(NodPrincipal*& graf) {
 	FILE* f = fopen("Text.txt", "r");
-	int varf, nrVarfuri;
-
 	if (f) {
+		int varf, nrVarfuri;
 		while (!feof(f)) {
-			//citim info ptr nodul principal si il cream
 			fscanf(f, "%d", &varf);
-			NodPrincipal* nodP = inserareNodPrincipal(graf, varf);
+			NodPrincipal* tmp = inserareListaPrincipala(graf, varf);
 
-			//citim nr de noduri adiacente
 			fscanf(f, "%d", &nrVarfuri);
-
-			//citim nodurile secundare
 			for (int i = 0; i < nrVarfuri; i++) {
 				fscanf(f, "%d", &varf);
-				NodSecundar* lista = nodP->listaNoduri;
+				NodSecundar* lista = tmp->listaNoduri;
 				inserareListaSecundara(lista, varf);
-				nodP->listaNoduri = lista;
+				tmp->listaNoduri = lista;
 			}
 		}
 	}
 }
 
-void parcurgereSimpla(NodPrincipal* graf) {
-	while (graf) {
-		printf("Nodul %d \n", graf->info);
-		NodSecundar* noduri = graf->listaNoduri;
-		while (noduri != NULL) {
-			printf("%d \t", noduri->info);
-			noduri = noduri->nextSecundar;
+void afisareGraf(NodPrincipal* graf) {
+	if (graf) {
+		while (graf != NULL) {
+			printf("Nodul: %d. \n", graf->info);
+			NodSecundar* noduri = graf->listaNoduri;
+			while (noduri) {
+				printf("%d\t", noduri->info);
+				noduri = noduri->nextSecundar;
+			}
+			printf("\n");
+			graf = graf->nexPrincipal;
 		}
-		printf("\n");
-		graf = graf->nextPrincipal;
 	}
 }
 
 void main() {
 	NodPrincipal* graf = NULL;
 	citireFisier(graf);
-	parcurgereSimpla(graf);
+	afisareGraf(graf);
 }
